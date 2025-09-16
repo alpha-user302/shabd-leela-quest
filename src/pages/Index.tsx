@@ -35,11 +35,19 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="animate-glow">
+              <Button 
+                size="lg" 
+                className="animate-glow"
+                onClick={() => window.location.href = '/login?type=team'}
+              >
                 <Users className="mr-2 h-5 w-5" />
                 Team Login
               </Button>
-              <Button variant="secondary" size="lg">
+              <Button 
+                variant="secondary" 
+                size="lg"
+                onClick={() => window.location.href = '/login?type=admin'}
+              >
                 <Lock className="mr-2 h-5 w-5" />
                 Admin Portal
               </Button>
@@ -152,7 +160,11 @@ const Index = () => {
           <p className="text-lg text-muted-foreground mb-8">
             Join the ultimate coding treasure hunt and prove your skills against the best developers
           </p>
-          <Button size="lg" className="animate-glow">
+          <Button 
+            size="lg" 
+            className="animate-glow"
+            onClick={() => window.location.href = '/login'}
+          >
             <Zap className="mr-2 h-5 w-5" />
             Begin Your Adventure
           </Button>
