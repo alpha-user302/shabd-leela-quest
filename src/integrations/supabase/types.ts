@@ -14,13 +14,148 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admins: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      pass_key: {
+        Row: {
+          created_at: string
+          id: string
+          pass_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pass_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pass_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      team_submissions: {
+        Row: {
+          answers: string[]
+          id: string
+          is_final: boolean
+          submitted_at: string
+          team_id: string
+        }
+        Insert: {
+          answers: string[]
+          id?: string
+          is_final?: boolean
+          submitted_at?: string
+          team_id: string
+        }
+        Update: {
+          answers?: string[]
+          id?: string
+          is_final?: boolean
+          submitted_at?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_submissions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          team_name: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          team_name: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          team_name?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_team: {
+        Args: {
+          team_display_name: string
+          team_password: string
+          team_username: string
+        }
+        Returns: string
+      }
+      get_team_reports: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          accuracy_percentage: number
+          answered_key: string
+          submitted_at: string
+          team_name: string
+        }[]
+      }
+      set_pass_key: {
+        Args: { new_pass_key: string }
+        Returns: undefined
+      }
+      verify_admin_login: {
+        Args: { input_password: string; input_username: string }
+        Returns: {
+          admin_id: string
+          username: string
+        }[]
+      }
+      verify_team_login: {
+        Args: { input_password: string; input_username: string }
+        Returns: {
+          team_id: string
+          team_name: string
+          username: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
