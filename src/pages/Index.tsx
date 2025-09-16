@@ -38,7 +38,7 @@ const Index = () => {
               <Button 
                 size="lg" 
                 className="animate-glow"
-                onClick={() => window.location.href = '/login?type=team'}
+                onClick={() => window.location.href = '/team-login'}
               >
                 <Users className="mr-2 h-5 w-5" />
                 Team Login
@@ -46,7 +46,7 @@ const Index = () => {
               <Button 
                 variant="secondary" 
                 size="lg"
-                onClick={() => window.location.href = '/login?type=admin'}
+                onClick={() => window.location.href = '/admin-login'}
               >
                 <Lock className="mr-2 h-5 w-5" />
                 Admin Portal
@@ -163,7 +163,7 @@ const Index = () => {
           <Button 
             size="lg" 
             className="animate-glow"
-            onClick={() => window.location.href = '/login'}
+            onClick={() => window.location.href = '/team-login'}
           >
             <Zap className="mr-2 h-5 w-5" />
             Begin Your Adventure
