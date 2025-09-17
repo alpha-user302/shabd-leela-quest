@@ -62,7 +62,7 @@ const AdminDashboard = () => {
   };
 
   if (!admin) {
-    return <Navigate to="/login?type=admin" replace />;
+    return <Navigate to="/admin-login" replace />;
   }
 
   return (

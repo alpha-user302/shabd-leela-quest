@@ -9,7 +9,7 @@ const TeamDashboard = () => {
   const { team, logout } = useAuth();
 
   if (!team) {
-    return <Navigate to="/login?type=team" replace />;
+    return <Navigate to="/team-login" replace />;
   }
 
   return (
