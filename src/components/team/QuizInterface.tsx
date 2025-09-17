@@ -75,12 +75,15 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('team_submissions')
-        .upsert({
+        .upsert([{
           team_id: team.id,
           answers: answers,
           is_final: false
+        }], {
+          onConflict: 'team_id',
+          ignoreDuplicates: false
         });
 
       if (error) throw error;
@@ -117,12 +120,15 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('team_submissions')
-        .upsert({
+        .upsert([{
           team_id: team.id,
           answers: answers,
           is_final: true
+        }], {
+          onConflict: 'team_id',
+          ignoreDuplicates: false
         });
 
       if (error) throw error;

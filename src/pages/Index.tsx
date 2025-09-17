@@ -2,22 +2,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Code, Users, Lock, Target, Zap } from "lucide-react";
-import heroImage from "@/assets/hero-coding-treasure.jpg";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-hero opacity-80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/20" />
         
         <div className="relative container mx-auto px-4 py-24 text-center">
           <div className="max-w-4xl mx-auto">
-            <Badge variant="secondary" className="mb-6 animate-float">
+            <Badge variant="secondary" className="mb-6">
               🏆 Ultimate Coding Challenge
             </Badge>
             
@@ -37,7 +32,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                className="animate-glow"
+                className="hover:shadow-lg transition-all duration-300"
                 onClick={() => window.location.href = '/team-login'}
               >
                 <Users className="mr-2 h-5 w-5" />
@@ -68,9 +63,9 @@ const Index = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          <Card className="bg-gradient-card border-primary/20 hover:shadow-glow-primary transition-all duration-300">
+          <Card className="border-primary/20 hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <div className="w-12 h-12 bg-gradient-hero rounded-lg flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-lg flex items-center justify-center mb-4">
                 <Target className="h-6 w-6 text-primary-foreground" />
               </div>
               <CardTitle>10 Unique Challenges</CardTitle>
@@ -87,9 +82,9 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-treasure/20 hover:shadow-glow-treasure transition-all duration-300">
+          <Card className="border-accent/20 hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <div className="w-12 h-12 bg-gradient-accent rounded-lg flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-accent to-primary rounded-lg flex items-center justify-center mb-4">
                 <Code className="h-6 w-6 text-accent-foreground" />
               </div>
               <CardTitle>Admin Control Panel</CardTitle>
@@ -106,9 +101,9 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-primary/20 hover:shadow-glow-primary transition-all duration-300">
+          <Card className="border-primary/20 hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <div className="w-12 h-12 bg-gradient-hero rounded-lg flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-lg flex items-center justify-center mb-4">
                 <Trophy className="h-6 w-6 text-primary-foreground" />
               </div>
               <CardTitle>Live Leaderboard</CardTitle>
@@ -128,7 +123,7 @@ const Index = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-gradient-card">
+      <section className="py-16 bg-secondary/20">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 text-center">
             <div>
@@ -136,11 +131,11 @@ const Index = () => {
               <div className="text-muted-foreground">Coding Challenges</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-treasure mb-2">∞</div>
+              <div className="text-3xl font-bold text-accent mb-2">∞</div>
               <div className="text-muted-foreground">Teams Supported</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-code mb-2">1</div>
+              <div className="text-3xl font-bold text-primary mb-2">1</div>
               <div className="text-muted-foreground">Ultimate Winner</div>
             </div>
             <div>
@@ -162,7 +157,7 @@ const Index = () => {
           </p>
           <Button 
             size="lg" 
-            className="animate-glow"
+            className="hover:shadow-lg transition-all duration-300"
             onClick={() => window.location.href = '/team-login'}
           >
             <Zap className="mr-2 h-5 w-5" />
