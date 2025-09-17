@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Save, Send, ArrowLeft, ArrowRight } from "lucide-react";
+import { Save, Send, ArrowLeft, ArrowRight, Target, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,20 +19,61 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   const [loading, setLoading] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [viewMode, setViewMode] = useState<'single' | 'all'>('single');
   const { toast } = useToast();
   const { team } = useAuth();
 
   const questions = [
-    "What is the first character of the secret code?",
-    "What is the second character of the secret code?", 
-    "What is the third character of the secret code?",
-    "What is the fourth character of the secret code?",
-    "What is the fifth character of the secret code?",
-    "What is the sixth character of the secret code?",
-    "What is the seventh character of the secret code?",
-    "What is the eighth character of the secret code?",
-    "What is the ninth character of the secret code?",
-    "What is the tenth character of the secret code?"
+    {
+      id: 1,
+      question: "Find the first character of the treasure code",
+      hint: "Look for clues in the beginning..."
+    },
+    {
+      id: 2,
+      question: "Discover the second character of the treasure code",
+      hint: "The pattern continues..."
+    },
+    {
+      id: 3,
+      question: "Uncover the third character of the treasure code",
+      hint: "Think about sequences..."
+    },
+    {
+      id: 4,
+      question: "Reveal the fourth character of the treasure code",
+      hint: "Numbers or letters?"
+    },
+    {
+      id: 5,
+      question: "Decode the fifth character of the treasure code",
+      hint: "Halfway through the mystery..."
+    },
+    {
+      id: 6,
+      question: "Extract the sixth character of the treasure code",
+      hint: "The treasure is getting closer..."
+    },
+    {
+      id: 7,
+      question: "Identify the seventh character of the treasure code",
+      hint: "Lucky number seven..."
+    },
+    {
+      id: 8,
+      question: "Determine the eighth character of the treasure code",
+      hint: "Almost there..."
+    },
+    {
+      id: 9,
+      question: "Find the ninth character of the treasure code",
+      hint: "One more to go..."
+    },
+    {
+      id: 10,
+      question: "Complete the treasure code with the tenth character",
+      hint: "The final piece of the puzzle!"
+    }
   ];
 
   useEffect(() => {
@@ -63,8 +104,8 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   };
 
   const handleAnswerChange = (index: number, value: string) => {
-    // Only allow single character
-    const char = value.slice(-1);
+    // Only allow single character and convert to uppercase
+    const char = value.slice(-1).toUpperCase();
     const newAnswers = [...answers];
     newAnswers[index] = char;
     setAnswers(newAnswers);
@@ -75,15 +116,14 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('team_submissions')
-        .upsert([{
+        .upsert({
           team_id: team.id,
           answers: answers,
           is_final: false
-        }], {
-          onConflict: 'team_id',
-          ignoreDuplicates: false
+        }, {
+          onConflict: 'team_id'
         });
 
       if (error) throw error;
@@ -120,15 +160,14 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('team_submissions')
-        .upsert([{
+        .upsert({
           team_id: team.id,
           answers: answers,
           is_final: true
-        }], {
-          onConflict: 'team_id',
-          ignoreDuplicates: false
+        }, {
+          onConflict: 'team_id'
         });
 
       if (error) throw error;
@@ -163,148 +202,255 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
     if (currentQuestion > 0) setCurrentQuestion(currentQuestion - 1);
   };
 
+  const goToQuestion = (index: number) => {
+    setCurrentQuestion(index);
+    setViewMode('single');
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
-        </Button>
-        <Badge variant={hasSubmitted ? "default" : "secondary"}>
-          {hasSubmitted ? "Final Submission" : "Draft"}
-        </Badge>
-      </div>
-
-      {/* Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quiz Progress</CardTitle>
-          <CardDescription>
-            Complete all 10 questions to form the secret code
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progress</span>
-              <span>{Math.round(getProgress())}% Complete</span>
-            </div>
-            <Progress value={getProgress()} className="w-full" />
-            <div className="text-sm text-muted-foreground">
-              {answers.filter(a => a !== "").length} of 10 questions answered
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {hasSubmitted && (
-        <Alert>
-          <AlertDescription>
-            You have already submitted your final answers. You can view them below but cannot make changes.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Question Navigation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Question {currentQuestion + 1} of 10</CardTitle>
-          <CardDescription>{questions[currentQuestion]}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Input
-                value={answers[currentQuestion]}
-                onChange={(e) => handleAnswerChange(currentQuestion, e.target.value)}
-                placeholder="Enter single character"
-                maxLength={1}
-                className="w-20 h-20 text-center text-2xl font-mono"
-                disabled={hasSubmitted}
-              />
-              <div className="text-sm text-muted-foreground">
-                Enter one character (letter, number, or symbol)
-              </div>
-            </div>
-
-            <div className="flex justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <div className="flex items-center gap-4">
+            <Badge variant={hasSubmitted ? "default" : "secondary"}>
+              {hasSubmitted ? "Final Submission" : "Draft"}
+            </Badge>
+            <div className="flex gap-2">
               <Button 
-                variant="outline" 
-                onClick={prevQuestion}
-                disabled={currentQuestion === 0}
+                variant={viewMode === 'single' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('single')}
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Previous
+                Single Question
               </Button>
               <Button 
-                variant="outline" 
-                onClick={nextQuestion}
-                disabled={currentQuestion === 9}
+                variant={viewMode === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('all')}
               >
-                Next
-                <ArrowRight className="w-4 h-4 ml-2" />
+                All Questions
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* All Answers Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Answers</CardTitle>
-          <CardDescription>
-            Review all your answers below
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-10 gap-2">
-            {answers.map((answer, index) => (
-              <div key={index} className="text-center">
-                <div className="text-sm text-muted-foreground mb-1">
-                  Q{index + 1}
-                </div>
-                <Input
-                  value={answer}
-                  onChange={(e) => handleAnswerChange(index, e.target.value)}
-                  className="w-12 h-12 text-center font-mono text-lg"
-                  maxLength={1}
-                  disabled={hasSubmitted}
-                />
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-4 p-4 bg-muted rounded-lg">
-            <div className="text-sm text-muted-foreground mb-2">Complete Answer Key:</div>
-            <div className="font-mono text-xl tracking-widest">
-              {answers.join("") || "_ _ _ _ _ _ _ _ _ _"}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      {!hasSubmitted && (
-        <div className="flex justify-end space-x-2">
-          <Button 
-            variant="outline" 
-            onClick={saveProgress}
-            disabled={loading}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Save Progress
-          </Button>
-          <Button 
-            onClick={submitFinal}
-            disabled={loading || answers.some(a => a === "")}
-          >
-            <Send className="w-4 h-4 mr-2" />
-            Submit Final Answers
-          </Button>
         </div>
-      )}
+
+        {/* Progress Card */}
+        <Card className="shadow-lg border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              Treasure Hunt Progress
+            </CardTitle>
+            <CardDescription>
+              Solve all 10 clues to discover the secret treasure code
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progress</span>
+                  <span>{Math.round(getProgress())}% Complete</span>
+                </div>
+                <Progress value={getProgress()} className="w-full h-3" />
+                <div className="text-sm text-muted-foreground">
+                  {answers.filter(a => a !== "").length} of 10 questions answered
+                </div>
+              </div>
+
+              {/* Quick Answer Overview */}
+              <div className="grid grid-cols-10 gap-2">
+                {answers.map((answer, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToQuestion(index)}
+                    className={`w-12 h-12 border-2 rounded-md font-mono text-lg font-bold transition-all ${
+                      answer 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-muted border-muted-foreground/20 hover:border-primary/50'
+                    } ${currentQuestion === index ? 'ring-2 ring-accent' : ''}`}
+                  >
+                    {answer || (index + 1)}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-4 bg-muted rounded-lg">
+                <div className="text-sm text-muted-foreground mb-2">Current Treasure Code:</div>
+                <div className="font-mono text-2xl tracking-widest font-bold">
+                  {answers.map((answer, index) => (
+                    <span key={index} className={answer ? 'text-primary' : 'text-muted-foreground'}>
+                      {answer || '_'}{index < 9 ? ' ' : ''}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {hasSubmitted && (
+          <Alert className="border-green-500/50 bg-green-500/10">
+            <AlertDescription className="text-green-700 dark:text-green-300">
+              ✅ You have successfully submitted your final answers! Your treasure code will be evaluated for accuracy.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Single Question View */}
+        {viewMode === 'single' && (
+          <Card className="shadow-lg border-primary/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-accent" />
+                    Question {currentQuestion + 1} of 10
+                  </CardTitle>
+                  <CardDescription className="text-lg mt-2">
+                    {questions[currentQuestion].question}
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="text-lg px-4 py-2">
+                  Q{currentQuestion + 1}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
+                  <p className="text-sm text-muted-foreground mb-2">💡 Hint:</p>
+                  <p className="text-accent font-medium">{questions[currentQuestion].hint}</p>
+                </div>
+
+                <div className="flex items-center justify-center space-x-4">
+                  <div className="text-center">
+                    <label className="text-sm font-medium text-muted-foreground block mb-2">
+                      Your Answer
+                    </label>
+                    <Input
+                      value={answers[currentQuestion]}
+                      onChange={(e) => handleAnswerChange(currentQuestion, e.target.value)}
+                      placeholder="?"
+                      maxLength={1}
+                      className="w-24 h-24 text-center text-4xl font-mono font-bold border-2 border-primary/50 focus:border-primary"
+                      disabled={hasSubmitted}
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Single character only
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={prevQuestion}
+                    disabled={currentQuestion === 0}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Previous
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={nextQuestion}
+                    disabled={currentQuestion === 9}
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* All Questions View */}
+        {viewMode === 'all' && (
+          <Card className="shadow-lg border-primary/20">
+            <CardHeader>
+              <CardTitle>All Questions Overview</CardTitle>
+              <CardDescription>
+                Review and answer all questions at once
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6">
+                {questions.map((q, index) => (
+                  <div key={index} className="p-4 border rounded-lg bg-card">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-2">
+                          Question {index + 1}: {q.question}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          💡 {q.hint}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <Input
+                          value={answers[index]}
+                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                          className="w-16 h-16 text-center text-2xl font-mono font-bold"
+                          maxLength={1}
+                          disabled={hasSubmitted}
+                          placeholder="?"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Action Buttons */}
+        {!hasSubmitted && (
+          <div className="flex justify-end space-x-4">
+            <Button 
+              variant="outline" 
+              onClick={saveProgress}
+              disabled={loading}
+              size="lg"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Progress
+            </Button>
+            <Button 
+              onClick={submitFinal}
+              disabled={loading || answers.some(a => a === "")}
+              size="lg"
+              className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Submit Final Answers
+            </Button>
+          </div>
+        )}
+
+        {/* Instructions */}
+        <Card className="shadow-lg border-primary/20">
+          <CardHeader>
+            <CardTitle>Instructions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• Each question requires exactly one character (letter, number, or symbol)</li>
+              <li>• You can switch between single question view and all questions view</li>
+              <li>• Save your progress anytime - your answers are stored as drafts</li>
+              <li>• Once you submit final answers, they cannot be changed</li>
+              <li>• Your final code will be compared character-by-character with the admin's pass key</li>
+              <li>• The team with the highest accuracy wins the treasure hunt!</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
