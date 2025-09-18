@@ -127,13 +127,20 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
           let correctAnswers = 0;
           const correctKeys = passKey.split('');
           
+          console.log('Calculating accuracy for:', submissionAnswers);
+          console.log('Correct key:', correctKeys);
+          
           for (let i = 0; i < 10; i++) {
             const answer = submissionAnswers[i] || '';
-            if (answer && correctKeys[i] && answer === correctKeys[i]) {
+            const correctKey = correctKeys[i] || '';
+            console.log(`Q${i+1}: "${answer}" vs "${correctKey}" = ${answer === correctKey ? 'CORRECT' : 'WRONG'}`);
+            if (answer && correctKey && answer === correctKey) {
               correctAnswers++;
             }
           }
+          console.log(`Total correct: ${correctAnswers}/10`);
           accuracyPercentage = (correctAnswers / 10) * 100;
+          console.log(`Accuracy: ${accuracyPercentage}%`);
         }
 
         return {
@@ -166,18 +173,14 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
 
   const toggleResultsLock = async () => {
     try {
-      const { error } = await supabase.rpc('set_pass_key', { new_pass_key: passKey });
-      
-      if (error) throw error;
-
-      // Update the results_locked status
-      const { error: updateError } = await supabase
+      // Update the results_locked status directly
+      const { error } = await supabase
         .from('pass_key')
         .update({ results_locked: !resultsLocked })
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if (updateError) throw updateError;
+      if (error) throw error;
 
       setResultsLocked(!resultsLocked);
       await loadPassKey(); // Reload to get latest data
