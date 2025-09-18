@@ -25,10 +25,12 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [passKey, setPassKey] = useState<string>('');
 
   useEffect(() => {
     if (open) {
       fetchReports();
+      loadPassKey();
       
       // Set up real-time subscription
       const channel = supabase
@@ -64,6 +66,24 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
       };
     }
   }, [open]);
+
+  const loadPassKey = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pass_key')
+        .select('pass_key')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setPassKey(data.pass_key);
+      }
+    } catch (error) {
+      console.error('Error loading pass key:', error);
+    }
+  };
 
   const fetchReports = async () => {
     setLoading(true);
@@ -106,6 +126,38 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
     if (accuracy >= 50) return <Badge variant="secondary">Good</Badge>;
     if (accuracy >= 30) return <Badge variant="outline">Fair</Badge>;
     return <Badge variant="destructive">Needs Improvement</Badge>;
+  };
+
+  const formatAnswerBreakdown = (answeredKey: string) => {
+    if (!answeredKey) return "No answers submitted";
+    
+    const answers = answeredKey.split('');
+    const correctAnswers = passKey.split('');
+    
+    return answers.map((answer, index) => {
+      const isCorrect = answer && correctAnswers[index] && answer === correctAnswers[index];
+      const isEmpty = !answer || answer === '';
+      
+      return (
+        <span key={index} className="inline-block">
+          <span className="text-muted-foreground">Q{index + 1}=</span>
+          <span 
+            className={`font-mono font-bold px-1 py-0.5 rounded text-xs ${
+              isEmpty 
+                ? 'text-muted-foreground bg-muted' 
+                : isCorrect 
+                ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' 
+                : 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30'
+            }`}
+          >
+            {answer || '_'}
+          </span>
+          {isCorrect && <span className="text-green-500 text-xs ml-0.5">✓</span>}
+          {!isEmpty && !isCorrect && <span className="text-red-500 text-xs ml-0.5">✗</span>}
+          {index < 9 && <span className="text-muted-foreground">, </span>}
+        </span>
+      );
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -165,6 +217,34 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
 
         {!loading && !error && reports.length > 0 && (
           <div className="space-y-6">
+            {/* Pass Key Reference */}
+            {passKey && (
+              <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-primary">
+                    <Target className="w-5 h-5" />
+                    Correct Answer Key (Admin View)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-primary/10 p-4 rounded-lg">
+                    <div className="text-sm text-muted-foreground mb-2">Master Answer Key:</div>
+                    <div className="text-lg leading-relaxed">
+                      {passKey.split('').map((answer, index) => (
+                        <span key={index} className="inline-block">
+                          <span className="text-muted-foreground">Q{index + 1}=</span>
+                          <span className="font-mono font-bold text-primary bg-primary/20 px-2 py-1 rounded text-sm">
+                            {answer}
+                          </span>
+                          {index < 9 && <span className="text-muted-foreground">, </span>}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
@@ -221,7 +301,7 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                     <TableRow>
                       <TableHead className="w-16">Rank</TableHead>
                       <TableHead>Team Name</TableHead>
-                      <TableHead>Submitted Answer</TableHead>
+                      <TableHead className="min-w-[400px]">Question Breakdown</TableHead>
                       <TableHead className="text-center">Accuracy</TableHead>
                       <TableHead className="text-center">Performance</TableHead>
                       <TableHead>Submitted At</TableHead>
@@ -245,10 +325,13 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                           </div>
                         </TableCell>
                         <TableCell className="font-semibold text-lg">{report.team_name}</TableCell>
-                        <TableCell>
-                          <code className="bg-muted px-3 py-2 rounded-md text-sm font-mono font-bold">
-                            {report.answered_key || "Not submitted"}
-                          </code>
+                        <TableCell className="py-4">
+                          <div className="bg-muted/50 p-3 rounded-lg">
+                            <div className="text-xs text-muted-foreground mb-2">Individual Answers:</div>
+                            <div className="text-sm leading-relaxed">
+                              {formatAnswerBreakdown(report.answered_key)}
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell className="text-center">
                           <span className="font-bold text-xl">{report.accuracy_percentage}%</span>
