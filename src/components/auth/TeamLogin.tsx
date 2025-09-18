@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function TeamLogin() {
   const [username, setUsername] = useState("");
@@ -15,6 +15,14 @@ export function TeamLogin() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { loginTeam, team } = useAuth();
+
+  // Redirect if already logged in as team
+  useEffect(() => {
+    if (team) {
+      navigate('/team-dashboard');
+    }
+  }, [team, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,30 +30,17 @@ export function TeamLogin() {
     setError("");
 
     try {
-      const { data, error } = await supabase.rpc('verify_team_login', {
-        input_username: username,
-        input_password: password
-      });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        // Store team session in localStorage
-        localStorage.setItem('team_session', JSON.stringify({
-          id: data[0].team_id,
-          username: data[0].username,
-          team_name: data[0].team_name,
-          type: 'team'
-        }));
-        
+      const result = await loginTeam(username, password);
+      
+      if (result.success) {
         toast({
           title: "Login successful",
-          description: `Welcome ${data[0].team_name}!`,
+          description: "Welcome to your team dashboard!",
         });
         
         navigate('/team-dashboard');
       } else {
-        setError("Invalid username or password");
+        setError(result.error || "Invalid username or password");
       }
     } catch (error) {
       console.error('Login error:', error);

@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 export function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -15,6 +16,14 @@ export function AdminLogin() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { loginAdmin, admin } = useAuth();
+
+  // Redirect if already logged in as admin
+  useEffect(() => {
+    if (admin) {
+      navigate('/admin-dashboard');
+    }
+  }, [admin, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,21 +31,9 @@ export function AdminLogin() {
     setError("");
 
     try {
-      const { data, error } = await supabase.rpc('verify_admin_login', {
-        input_username: username,
-        input_password: password
-      });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        // Store admin session in localStorage
-        localStorage.setItem('admin_session', JSON.stringify({
-          id: data[0].admin_id,
-          username: data[0].username,
-          type: 'admin'
-        }));
-        
+      const result = await loginAdmin(username, password);
+      
+      if (result.success) {
         toast({
           title: "Login successful",
           description: "Welcome to the admin dashboard!",
@@ -44,7 +41,7 @@ export function AdminLogin() {
         
         navigate('/admin-dashboard');
       } else {
-        setError("Invalid username or password");
+        setError(result.error || "Invalid username or password");
       }
     } catch (error) {
       console.error('Login error:', error);
