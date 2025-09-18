@@ -116,17 +116,36 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Check if submission exists first
+      const { data: existing } = await supabase
         .from('team_submissions')
-        .upsert({
-          team_id: team.id,
-          answers: answers,
-          is_final: false
-        }, {
-          onConflict: 'team_id'
-        });
+        .select('id')
+        .eq('team_id', team.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      let result;
+      if (existing) {
+        // Update existing submission
+        result = await supabase
+          .from('team_submissions')
+          .update({
+            answers: answers,
+            is_final: false,
+            submitted_at: new Date().toISOString()
+          })
+          .eq('team_id', team.id);
+      } else {
+        // Insert new submission
+        result = await supabase
+          .from('team_submissions')
+          .insert({
+            team_id: team.id,
+            answers: answers,
+            is_final: false
+          });
+      }
+
+      if (result.error) throw result.error;
 
       toast({
         title: "Progress saved",
@@ -160,17 +179,36 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Check if submission exists first
+      const { data: existing } = await supabase
         .from('team_submissions')
-        .upsert({
-          team_id: team.id,
-          answers: answers,
-          is_final: true
-        }, {
-          onConflict: 'team_id'
-        });
+        .select('id')
+        .eq('team_id', team.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      let result;
+      if (existing) {
+        // Update existing submission
+        result = await supabase
+          .from('team_submissions')
+          .update({
+            answers: answers,
+            is_final: true,
+            submitted_at: new Date().toISOString()
+          })
+          .eq('team_id', team.id);
+      } else {
+        // Insert new submission
+        result = await supabase
+          .from('team_submissions')
+          .insert({
+            team_id: team.id,
+            answers: answers,
+            is_final: true
+          });
+      }
+
+      if (result.error) throw result.error;
 
       setHasSubmitted(true);
       toast({
