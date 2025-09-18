@@ -18,6 +18,7 @@ interface TeamReport {
   answered_key: string;
   accuracy_percentage: number;
   submitted_at: string;
+  is_final: boolean;
 }
 
 export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) {
@@ -90,12 +91,58 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
     setError("");
 
     try {
-      const { data, error } = await supabase.rpc('get_team_reports');
+      // Get latest submissions for each team (including drafts)
+      const { data: submissions, error: submissionsError } = await supabase
+        .from('team_submissions')
+        .select(`
+          team_id,
+          answers,
+          submitted_at,
+          is_final,
+          teams!inner(team_name)
+        `)
+        .order('submitted_at', { ascending: false });
 
-      if (error) throw error;
+      if (submissionsError) throw submissionsError;
+
+      // Get the latest submission for each team
+      const latestSubmissions = submissions?.reduce((acc, submission) => {
+        if (!acc[submission.team_id] || 
+            new Date(submission.submitted_at) > new Date(acc[submission.team_id].submitted_at)) {
+          acc[submission.team_id] = submission;
+        }
+        return acc;
+      }, {} as Record<string, any>) || {};
+
+      // Calculate accuracy for each team
+      const reportsData = Object.values(latestSubmissions).map((submission: any) => {
+        const answeredKey = submission.answers?.join('') || '';
+        let accuracyPercentage = 0;
+
+        if (passKey && answeredKey) {
+          let correctAnswers = 0;
+          const answers = answeredKey.split('');
+          const correctKeys = passKey.split('');
+          
+          for (let i = 0; i < Math.min(answers.length, correctKeys.length); i++) {
+            if (answers[i] && correctKeys[i] && answers[i] === correctKeys[i]) {
+              correctAnswers++;
+            }
+          }
+          accuracyPercentage = Math.round((correctAnswers / 10) * 100 * 100) / 100;
+        }
+
+        return {
+          team_name: submission.teams.team_name,
+          answered_key: answeredKey,
+          accuracy_percentage: accuracyPercentage,
+          submitted_at: submission.submitted_at,
+          is_final: submission.is_final
+        };
+      });
 
       // Sort reports by accuracy (highest first), then by submission time (earliest first)
-      const sortedReports = (data || []).sort((a, b) => {
+      const sortedReports = reportsData.sort((a, b) => {
         if (b.accuracy_percentage === a.accuracy_percentage) {
           return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
         }
@@ -308,6 +355,7 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                       <TableHead className="min-w-[400px]">Question Breakdown</TableHead>
                       <TableHead className="text-center">Accuracy</TableHead>
                       <TableHead className="text-center">Performance</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
                       <TableHead>Submitted At</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -342,6 +390,14 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                         </TableCell>
                         <TableCell className="text-center">
                           {getAccuracyBadge(report.accuracy_percentage)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge 
+                            variant={report.is_final ? "default" : "secondary"}
+                            className={report.is_final ? "bg-green-500 hover:bg-green-600" : "bg-orange-500 hover:bg-orange-600"}
+                          >
+                            {report.is_final ? "Final" : "Draft"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
