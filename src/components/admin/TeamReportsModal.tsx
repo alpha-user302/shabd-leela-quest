@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Trophy, Calendar, RefreshCw, Users, Target, Clock, Medal, Award } from "lucide-react";
+import { Loader2, Trophy, Calendar, RefreshCw, Users, Target, Clock, Medal, Award, Lock, Unlock } from "lucide-react";
 
 interface TeamReportsModalProps {
   open: boolean;
@@ -28,6 +28,7 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [passKey, setPassKey] = useState<string>('');
+  const [resultsLocked, setResultsLocked] = useState<boolean>(false);
 
   useEffect(() => {
     if (open) {
@@ -73,7 +74,7 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
     try {
       const { data, error } = await supabase
         .from('pass_key')
-        .select('pass_key')
+        .select('pass_key, results_locked')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -81,6 +82,7 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
       if (error) throw error;
       if (data) {
         setPassKey(data.pass_key);
+        setResultsLocked(data.results_locked || false);
       }
     } catch (error) {
       console.error('Error loading pass key:', error);
@@ -131,7 +133,7 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
               correctAnswers++;
             }
           }
-          accuracyPercentage = Math.round((correctAnswers / 10) * 100 * 100) / 100;
+          accuracyPercentage = (correctAnswers / 10) * 100;
         }
 
         return {
@@ -159,6 +161,29 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
       setError("Failed to fetch team reports. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleResultsLock = async () => {
+    try {
+      const { error } = await supabase.rpc('set_pass_key', { new_pass_key: passKey });
+      
+      if (error) throw error;
+
+      // Update the results_locked status
+      const { error: updateError } = await supabase
+        .from('pass_key')
+        .update({ results_locked: !resultsLocked })
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (updateError) throw updateError;
+
+      setResultsLocked(!resultsLocked);
+      await loadPassKey(); // Reload to get latest data
+    } catch (error) {
+      console.error('Error toggling results lock:', error);
+      setError("Failed to toggle results lock. Please try again.");
     }
   };
 
@@ -240,6 +265,15 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                 Updated: {lastUpdated.toLocaleTimeString()}
               </div>
               <Button 
+                variant={resultsLocked ? "destructive" : "default"}
+                size="sm" 
+                onClick={toggleResultsLock}
+                disabled={loading}
+              >
+                {resultsLocked ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1" />}
+                {resultsLocked ? "Unlock Results" : "Lock Results"}
+              </Button>
+              <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={fetchReports}
@@ -280,6 +314,12 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                   <CardTitle className="flex items-center gap-2 text-primary">
                     <Target className="w-5 h-5" />
                     Correct Answer Key (Admin View)
+                    {resultsLocked && (
+                      <div className="ml-auto flex items-center gap-1 text-red-500">
+                        <Lock className="w-4 h-4" />
+                        <span className="text-sm">Results Locked</span>
+                      </div>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

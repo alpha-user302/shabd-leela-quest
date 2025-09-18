@@ -22,6 +22,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   const [viewMode, setViewMode] = useState<'single' | 'all'>('single');
   const [passKey, setPassKey] = useState<string>('');
   const [savingQuestion, setSavingQuestion] = useState<number | null>(null);
+  const [resultsLocked, setResultsLocked] = useState<boolean>(false);
   const { toast } = useToast();
   const { team } = useAuth();
 
@@ -87,7 +88,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
     try {
       const { data, error } = await supabase
         .from('pass_key')
-        .select('pass_key')
+        .select('pass_key, results_locked')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -95,6 +96,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
       if (error) throw error;
       if (data) {
         setPassKey(data.pass_key);
+        setResultsLocked(data.results_locked || false);
       }
     } catch (error) {
       console.error('Error loading pass key:', error);
@@ -136,7 +138,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   };
 
   const saveIndividualQuestion = async (questionIndex: number, answer: string) => {
-    if (!team) return;
+    if (!team || resultsLocked) return;
 
     setSavingQuestion(questionIndex);
     try {
@@ -191,7 +193,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   };
 
   const saveProgress = async () => {
-    if (!team) return;
+    if (!team || resultsLocked) return;
 
     setLoading(true);
     try {
@@ -243,7 +245,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   };
 
   const submitFinal = async () => {
-    if (!team) return;
+    if (!team || resultsLocked) return;
 
     // Check if all questions are answered
     const unanswered = answers.some(answer => answer === "");
@@ -430,6 +432,14 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
           </Alert>
         )}
 
+        {resultsLocked && (
+          <Alert className="border-red-500/50 bg-red-500/10">
+            <AlertDescription className="text-red-700 dark:text-red-300">
+              🔒 Results have been locked by the administrator. No further changes can be made to your submission.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Single Question View */}
         {viewMode === 'single' && (
           <Card className="shadow-lg border-primary/20">
@@ -467,7 +477,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
                       placeholder="?"
                       maxLength={1}
                       className="w-24 h-24 text-center text-4xl font-mono font-bold border-2 border-primary/50 focus:border-primary"
-                      disabled={hasSubmitted}
+                      disabled={hasSubmitted || resultsLocked}
                     />
                     <p className="text-xs text-muted-foreground mt-2">
                       Single character only
@@ -539,7 +549,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
         )}
 
         {/* Action Buttons */}
-        {!hasSubmitted && (
+        {!hasSubmitted && !resultsLocked && (
           <div className="flex justify-end space-x-4">
             <Button 
               variant="outline" 
