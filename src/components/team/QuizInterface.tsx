@@ -187,8 +187,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   };
 
   const getAnswerStatus = (index: number) => {
-    if (!passKey || !answers[index]) return 'empty';
-    return passKey[index] === answers[index] ? 'correct' : 'incorrect';
+    return answers[index] ? 'answered' : 'empty';
   };
 
   const saveProgress = async () => {
@@ -390,11 +389,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
                       key={index}
                       onClick={() => goToQuestion(index)}
                       className={`w-12 h-12 border-2 rounded-md font-mono text-lg font-bold transition-all relative ${
-                        status === 'correct' 
-                          ? 'bg-green-500 text-white border-green-500' 
-                          : status === 'incorrect'
-                          ? 'bg-red-500 text-white border-red-500'
-                          : answer 
+                        status === 'answered' 
                           ? 'bg-primary text-primary-foreground border-primary' 
                           : 'bg-muted border-muted-foreground/20 hover:border-primary/50'
                       } ${currentQuestion === index ? 'ring-2 ring-accent' : ''}`}
@@ -413,31 +408,15 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
               <div className="p-4 bg-muted rounded-lg">
                 <div className="text-sm text-muted-foreground mb-2">Current Treasure Code:</div>
                 <div className="font-mono text-2xl tracking-widest font-bold">
-                  {answers.map((answer, index) => {
-                    const status = getAnswerStatus(index);
-                    return (
-                      <span 
-                        key={index} 
-                        className={
-                          status === 'correct' 
-                            ? 'text-green-500' 
-                            : status === 'incorrect'
-                            ? 'text-red-500'
-                            : answer 
-                            ? 'text-primary' 
-                            : 'text-muted-foreground'
-                        }
-                      >
-                        {answer || '_'}{index < 9 ? ' ' : ''}
-                      </span>
-                    );
-                  })}
+                  {answers.map((answer, index) => (
+                    <span 
+                      key={index} 
+                      className={answer ? 'text-primary' : 'text-muted-foreground'}
+                    >
+                      {answer || '_'}{index < 9 ? ' ' : ''}
+                    </span>
+                  ))}
                 </div>
-                {passKey && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    <span className="text-green-500">✓ Correct</span> | <span className="text-red-500">✗ Incorrect</span> | <span className="text-muted-foreground">_ Empty</span>
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>
@@ -542,27 +521,14 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
                         </p>
                       </div>
                       <div className="text-center">
-                        <div className="relative">
-                          <Input
-                            value={answers[index]}
-                            onChange={(e) => handleAnswerChange(index, e.target.value)}
-                            className={`w-16 h-16 text-center text-2xl font-mono font-bold ${
-                              getAnswerStatus(index) === 'correct' 
-                                ? 'border-green-500 bg-green-50 dark:bg-green-950' 
-                                : getAnswerStatus(index) === 'incorrect'
-                                ? 'border-red-500 bg-red-50 dark:bg-red-950'
-                                : ''
-                            }`}
-                            maxLength={1}
-                            disabled={hasSubmitted}
-                            placeholder="?"
-                          />
-                          {savingQuestion === index && (
-                            <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center rounded-md">
-                              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                            </div>
-                          )}
-                        </div>
+                        <Input
+                          value={answers[index]}
+                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                          className="w-16 h-16 text-center text-2xl font-mono font-bold"
+                          maxLength={1}
+                          disabled={hasSubmitted}
+                          placeholder="?"
+                        />
                       </div>
                     </div>
                   </div>

@@ -3,10 +3,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Key, FileText, LogOut, Plus } from 'lucide-react';
+import { Users, Key, FileText, LogOut, Plus, Settings } from 'lucide-react';
 import { AddTeamModal } from '@/components/admin/AddTeamModal';
 import { PassKeyModal } from '@/components/admin/PassKeyModal';
 import { TeamReportsModal } from '@/components/admin/TeamReportsModal';
+import { TeamManagementModal } from '@/components/admin/TeamManagementModal';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminDashboard = () => {
@@ -14,6 +15,7 @@ const AdminDashboard = () => {
   const [addTeamOpen, setAddTeamOpen] = useState(false);
   const [passKeyOpen, setPassKeyOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
+  const [teamManagementOpen, setTeamManagementOpen] = useState(false);
   const [stats, setStats] = useState({
     totalTeams: 0,
     totalSubmissions: 0,
@@ -101,13 +103,21 @@ const AdminDashboard = () => {
                 Add, edit, and manage participating teams
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <Button 
                 className="w-full"
+                onClick={() => setTeamManagementOpen(true)}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Teams
+              </Button>
+              <Button 
+                className="w-full"
+                variant="outline"
                 onClick={() => setAddTeamOpen(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add New Team
+                Quick Add Team
               </Button>
             </CardContent>
           </Card>
@@ -195,6 +205,10 @@ const AdminDashboard = () => {
         <TeamReportsModal 
           open={reportsOpen} 
           onOpenChange={setReportsOpen}
+        />
+        <TeamManagementModal 
+          open={teamManagementOpen} 
+          onOpenChange={setTeamManagementOpen}
         />
       </div>
     </div>
