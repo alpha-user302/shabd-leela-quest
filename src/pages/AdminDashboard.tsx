@@ -71,7 +71,7 @@ const AdminDashboard = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-neon bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
               Admin Dashboard
             </h1>
             <p className="text-muted-foreground mt-2">
