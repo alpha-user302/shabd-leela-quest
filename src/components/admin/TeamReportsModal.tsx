@@ -173,12 +173,21 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
 
   const toggleResultsLock = async () => {
     try {
-      // Update the results_locked status directly
+      // First get the current pass key record
+      const { data: passKeyData, error: fetchError } = await supabase
+        .from('pass_key')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update the specific record by ID
       const { error } = await supabase
         .from('pass_key')
         .update({ results_locked: !resultsLocked })
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .eq('id', passKeyData.id);
 
       if (error) throw error;
 
