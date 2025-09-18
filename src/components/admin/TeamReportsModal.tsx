@@ -19,6 +19,7 @@ interface TeamReport {
   accuracy_percentage: number;
   submitted_at: string;
   is_final: boolean;
+  answers: any[];
 }
 
 export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) {
@@ -117,15 +118,16 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
       // Calculate accuracy for each team
       const reportsData = Object.values(latestSubmissions).map((submission: any) => {
         const answeredKey = submission.answers?.join('') || '';
+        const submissionAnswers = submission.answers || [];
         let accuracyPercentage = 0;
 
-        if (passKey && answeredKey) {
+        if (passKey && submissionAnswers.length > 0) {
           let correctAnswers = 0;
-          const answers = answeredKey.split('');
           const correctKeys = passKey.split('');
           
-          for (let i = 0; i < Math.min(answers.length, correctKeys.length); i++) {
-            if (answers[i] && correctKeys[i] && answers[i] === correctKeys[i]) {
+          for (let i = 0; i < 10; i++) {
+            const answer = submissionAnswers[i] || '';
+            if (answer && correctKeys[i] && answer === correctKeys[i]) {
               correctAnswers++;
             }
           }
@@ -137,7 +139,8 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
           answered_key: answeredKey,
           accuracy_percentage: accuracyPercentage,
           submitted_at: submission.submitted_at,
-          is_final: submission.is_final
+          is_final: submission.is_final,
+          answers: submissionAnswers
         };
       });
 
@@ -175,15 +178,17 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
     return <Badge variant="destructive">Needs Improvement</Badge>;
   };
 
-  const formatAnswerBreakdown = (answeredKey: string) => {
-    if (!answeredKey) return <span className="text-muted-foreground">No answers submitted</span>;
+  const formatAnswerBreakdown = (answeredKey: string, submissionAnswers: any[]) => {
+    if (!submissionAnswers || submissionAnswers.length === 0) {
+      return <span className="text-muted-foreground">No answers submitted</span>;
+    }
     
-    const answers = answeredKey.split('');
     const correctAnswers = passKey.split('');
     
     return (
       <>
-        {answers.map((answer, index) => {
+        {Array.from({ length: 10 }, (_, index) => {
+          const answer = submissionAnswers[index] || '';
           const isCorrect = answer && correctAnswers[index] && answer === correctAnswers[index];
           const isEmpty = !answer || answer === '';
           
@@ -203,7 +208,7 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
               </span>
               {isCorrect && <span className="text-green-500 text-xs ml-0.5">✓</span>}
               {!isEmpty && !isCorrect && <span className="text-red-500 text-xs ml-0.5">✗</span>}
-              {index < answers.length - 1 && <span className="text-muted-foreground">, </span>}
+              {index < 9 && <span className="text-muted-foreground">, </span>}
             </span>
           );
         })}
@@ -381,7 +386,7 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                           <div className="bg-muted/50 p-3 rounded-lg">
                             <div className="text-xs text-muted-foreground mb-2">Individual Answers:</div>
                             <div className="text-sm leading-relaxed">
-                              {formatAnswerBreakdown(report.answered_key)}
+                              {formatAnswerBreakdown(report.answered_key, report.answers)}
                             </div>
                           </div>
                         </TableCell>
