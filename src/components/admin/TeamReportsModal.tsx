@@ -129,35 +129,39 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
   };
 
   const formatAnswerBreakdown = (answeredKey: string) => {
-    if (!answeredKey) return "No answers submitted";
+    if (!answeredKey) return <span className="text-muted-foreground">No answers submitted</span>;
     
     const answers = answeredKey.split('');
     const correctAnswers = passKey.split('');
     
-    return answers.map((answer, index) => {
-      const isCorrect = answer && correctAnswers[index] && answer === correctAnswers[index];
-      const isEmpty = !answer || answer === '';
-      
-      return (
-        <span key={index} className="inline-block">
-          <span className="text-muted-foreground">Q{index + 1}=</span>
-          <span 
-            className={`font-mono font-bold px-1 py-0.5 rounded text-xs ${
-              isEmpty 
-                ? 'text-muted-foreground bg-muted' 
-                : isCorrect 
-                ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' 
-                : 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30'
-            }`}
-          >
-            {answer || '_'}
-          </span>
-          {isCorrect && <span className="text-green-500 text-xs ml-0.5">✓</span>}
-          {!isEmpty && !isCorrect && <span className="text-red-500 text-xs ml-0.5">✗</span>}
-          {index < 9 && <span className="text-muted-foreground">, </span>}
-        </span>
-      );
-    });
+    return (
+      <>
+        {answers.map((answer, index) => {
+          const isCorrect = answer && correctAnswers[index] && answer === correctAnswers[index];
+          const isEmpty = !answer || answer === '';
+          
+          return (
+            <span key={index} className="inline-block">
+              <span className="text-muted-foreground">Q{index + 1}=</span>
+              <span 
+                className={`font-mono font-bold px-1 py-0.5 rounded text-xs ${
+                  isEmpty 
+                    ? 'text-muted-foreground bg-muted' 
+                    : isCorrect 
+                    ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' 
+                    : 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30'
+                }`}
+              >
+                {answer || '_'}
+              </span>
+              {isCorrect && <span className="text-green-500 text-xs ml-0.5">✓</span>}
+              {!isEmpty && !isCorrect && <span className="text-red-500 text-xs ml-0.5">✗</span>}
+              {index < answers.length - 1 && <span className="text-muted-foreground">, </span>}
+            </span>
+          );
+        })}
+      </>
+    );
   };
 
   const formatDate = (dateString: string) => {
