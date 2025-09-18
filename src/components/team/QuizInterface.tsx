@@ -23,6 +23,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   const [passKey, setPassKey] = useState<string>('');
   const [savingQuestion, setSavingQuestion] = useState<number | null>(null);
   const [resultsLocked, setResultsLocked] = useState<boolean>(false);
+  const [teamLocked, setTeamLocked] = useState<boolean>(false);
   const { toast } = useToast();
   const { team } = useAuth();
 
@@ -82,6 +83,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   useEffect(() => {
     loadExistingSubmission();
     loadPassKey();
+    checkTeamLockStatus();
   }, []);
 
   const loadPassKey = async () => {
@@ -100,6 +102,25 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
       }
     } catch (error) {
       console.error('Error loading pass key:', error);
+    }
+  };
+
+  const checkTeamLockStatus = async () => {
+    if (!team) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('is_locked')
+        .eq('id', team.id)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setTeamLocked(data.is_locked || false);
+      }
+    } catch (error) {
+      console.error('Error checking team lock status:', error);
     }
   };
 
@@ -138,7 +159,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   };
 
   const saveIndividualQuestion = async (questionIndex: number, answer: string) => {
-    if (!team || resultsLocked) return;
+    if (!team || resultsLocked || teamLocked) return;
 
     setSavingQuestion(questionIndex);
     try {
@@ -193,7 +214,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   };
 
   const saveProgress = async () => {
-    if (!team || resultsLocked) return;
+    if (!team || resultsLocked || teamLocked) return;
 
     setLoading(true);
     try {
@@ -245,7 +266,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
   };
 
   const submitFinal = async () => {
-    if (!team || resultsLocked) return;
+    if (!team || resultsLocked || teamLocked) return;
 
     // Check if all questions are answered
     const unanswered = answers.some(answer => answer === "");
@@ -440,6 +461,14 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
           </Alert>
         )}
 
+        {teamLocked && (
+          <Alert className="border-orange-500/50 bg-orange-500/10">
+            <AlertDescription className="text-orange-700 dark:text-orange-300">
+              🔒 Your team has been locked by the administrator. No changes can be made to your submission.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Single Question View */}
         {viewMode === 'single' && (
           <Card className="shadow-lg border-primary/20">
@@ -477,7 +506,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
                       placeholder="?"
                       maxLength={1}
                       className="w-24 h-24 text-center text-4xl font-mono font-bold border-2 border-primary/50 focus:border-primary"
-                      disabled={hasSubmitted || resultsLocked}
+                      disabled={hasSubmitted || resultsLocked || teamLocked}
                     />
                     <p className="text-xs text-muted-foreground mt-2">
                       Single character only
@@ -536,7 +565,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
                           onChange={(e) => handleAnswerChange(index, e.target.value)}
                           className="w-16 h-16 text-center text-2xl font-mono font-bold"
                           maxLength={1}
-                          disabled={hasSubmitted}
+                          disabled={hasSubmitted || resultsLocked || teamLocked}
                           placeholder="?"
                         />
                       </div>
@@ -549,7 +578,7 @@ export function QuizInterface({ onBack }: QuizInterfaceProps) {
         )}
 
         {/* Action Buttons */}
-        {!hasSubmitted && !resultsLocked && (
+        {!hasSubmitted && !resultsLocked && !teamLocked && (
           <div className="flex justify-end space-x-4">
             <Button 
               variant="outline" 

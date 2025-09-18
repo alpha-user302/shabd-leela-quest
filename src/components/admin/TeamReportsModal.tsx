@@ -29,11 +29,13 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [passKey, setPassKey] = useState<string>('');
   const [resultsLocked, setResultsLocked] = useState<boolean>(false);
+  const [teams, setTeams] = useState<any[]>([]);
 
   useEffect(() => {
     if (open) {
       fetchReports();
       loadPassKey();
+      fetchTeams();
       
       // Set up real-time subscription
       const channel = supabase
@@ -168,6 +170,37 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
       setError("Failed to fetch team reports. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTeams = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, team_name, is_locked')
+        .order('team_name');
+
+      if (error) throw error;
+      setTeams(data || []);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  };
+
+  const toggleTeamLock = async (teamId: string, currentLockStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .update({ is_locked: !currentLockStatus })
+        .eq('id', teamId);
+
+      if (error) throw error;
+      
+      // Refresh teams list
+      await fetchTeams();
+    } catch (error) {
+      console.error('Error toggling team lock:', error);
+      setError("Failed to toggle team lock. Please try again.");
     }
   };
 
@@ -391,6 +424,45 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                 </CardHeader>
               </Card>
             </div>
+
+            {/* Team Lock Controls */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lock className="w-5 h-5" />
+                  Team Lock Controls
+                </CardTitle>
+                <CardDescription>
+                  Lock/unlock individual teams to prevent submissions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {teams.map((team) => (
+                    <div key={team.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <span className="font-medium">{team.team_name}</span>
+                      <Button
+                        variant={team.is_locked ? "destructive" : "outline"}
+                        size="sm"
+                        onClick={() => toggleTeamLock(team.id, team.is_locked)}
+                      >
+                        {team.is_locked ? (
+                          <>
+                            <Lock className="w-3 h-3 mr-1" />
+                            Locked
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="w-3 h-3 mr-1" />
+                            Active
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Leaderboard Table */}
             <Card>
