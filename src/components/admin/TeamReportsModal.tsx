@@ -364,9 +364,9 @@ export function TeamReportsModal({ open, onOpenChange }: TeamReportsModalProps) 
                       <TableRow 
                         key={`${report.team_name}-${index}`}
                         className={`${
-                          index === 0 ? 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20' :
-                          index === 1 ? 'bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-950/20 dark:to-slate-950/20' :
-                          index === 2 ? 'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' :
+                          index === 0 ? 'bg-primary/5 border-primary/20' :
+                          index === 1 ? 'bg-secondary/5 border-secondary/20' :
+                          index === 2 ? 'bg-accent/5 border-accent/20' :
                           ''
                         }`}
                       >
